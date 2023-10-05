@@ -1,0 +1,93 @@
+import { LightningElement, track, wire } from 'lwc';
+import createCase from '@salesforce/apex/CreateFormForContactUsUrlCtrl.createCase';
+import getCaseReasonPicklistValues from '@salesforce/apex/CreateFormForContactUsUrlCtrl.getCaseReasonPicklistValues';
+import sendEmailToCustomer from '@salesforce/apex/CreateFormForContactUsUrlCtrl.sendEmailToCustomer';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+export default class CreateFormAndCustomLink extends LightningElement {
+    @track phone = '';
+    @track email = '';
+    @track description = '';
+    @track caseReason;
+    caseReasonOptions = [];
+    @wire(getCaseReasonPicklistValues) reasonPicklistValues({ data, error }) {
+        if (data) {
+            this.caseReasonOptions = data.map(value => ({ label: value, value: value }));
+        } else if (error) {
+            console.error('Error fetching Case reason picklist values', error);
+        }
+    }
+
+    handlePhoneChange(event) {
+        this.phone = event.target.value;
+    }
+    handleEmailChange(event) {
+        this.email = event.target.value;
+    }
+    handleDescriptionChange(event) {
+        this.description = event.target.value;
+    }
+    handleCaseReasonChange(event) {
+        this.caseReason = event.target.value;
+    }
+
+    handleSubmit() {
+        const emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        const email = this.template.querySelector('[data-id="txtEmailAddress"]');
+        const emailVal = email.value;
+
+        if (this.email === null || this.email === undefined || this.email === '') {
+            this.showToast('Error', 'Please Enter Your Email', 'error');
+            return;
+        }
+        if (!emailVal.match(emailRegex)) {
+            this.showToast('Error', 'Please Enter Valid Email Id', 'error');
+            //     email.setCustomValidity("Please enter valid email");
+            email.reportValidity();
+            return;
+        } else {
+            email.setCustomValidity("");
+        }
+
+        if (this.phone === null || this.phone === undefined || this.phone === '') {
+            this.showToast('Error', 'Please Enter Your Phone', 'error');
+            return;
+            //Add Validation to Phone Number
+        } else if (this.phone.length < 10) {
+            this.showToast('Error', 'Please Enter a valid Phone number', 'error');
+            return;
+        }
+        createCase({
+            contactEmail: this.email,
+            contactPhone: this.phone,
+            description: this.description,
+            caseReason: this.caseReason
+        }).then((result) => {
+            // Case created successfully
+          //  alert('Case Created Successfully');
+            this.showToast('Success', 'Thank You for Contact Us.\n\n  Our Representative will contact you shortly', 'success');
+            sendEmailToCustomer({ customerEmail: this.email })
+                .then(() => {
+                   // alert(this.email);
+                    // Email sent successfully
+                })
+                .catch(error => {
+                       //alert("error ::" + JSON.stringify(error.body));
+                //    this.showToast('Error', 'An error occurred while sending email to customer', 'error');
+                });
+        }).catch(error => {
+            // Handle Case creation error
+            //    alert("error ::" + JSON.stringify(error.body));
+            this.showToast('Error', 'An error occurred while creating the Case record', 'error');
+        });
+
+        //Method Close Tag
+    }
+    showToast(title, message, variant) {
+        const event = new ShowToastEvent({
+            title: title,
+            message: message,
+            variant: variant
+        });
+        this.dispatchEvent(event);
+    }
+}

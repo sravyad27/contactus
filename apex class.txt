@@ -1,0 +1,43 @@
+public without sharing class CreateFormForContactUsUrlCtrl {
+    @AuraEnabled
+    public static void createCase(String caseNumber,String contactPhone	, String contactEmail, String description,String caseReason) 
+    {
+        Case caseRec = new Case();
+        caseRec.SuppliedPhone = contactPhone;
+        caseRec.SuppliedEmail = contactEmail;
+        caseRec.Reason = caseReason;
+        caseRec.Description = description;
+        caseRec.Origin = 'Web';
+        insert caseRec;
+    }    
+    // Fetch the Case Reason Picklist Values
+    @AuraEnabled(cacheable=true)
+    public static List<String> getCaseReasonPicklistValues() {
+        List<String> caseReasonValues = new List<String>(); 
+        Schema.DescribeFieldResult fieldResult = Case.Reason.getDescribe();
+        for (Schema.PicklistEntry entry : fieldResult.getPicklistValues()) {
+            caseReasonValues.add(entry.getLabel());
+        }
+        return caseReasonValues;
+    }
+    // Send an Email to customer when Case is Created
+@AuraEnabled
+public static void sendEmailToCustomer(String customerEmail) {
+        List<String> customerEmails = new List<String>{customerEmail};
+        Messaging.SingleEmailMessage email = new Messaging.SingleEmailMessage();
+        email.setToAddresses(customerEmails);
+        email.setSubject('Enquiry submitted');
+        email.setPlainTextBody('Your enquiry has been sent successfully');
+        Messaging.sendEmail(new List<Messaging.SingleEmailMessage>{email});
+     /*catch (Exception e) {
+        System.debug('Error sending email to customer: ' + e.getMessage());
+        throw new AuraHandledException('Error sending email to customer: ' + e.getMessage());
+    }*/
+}
+}
+
+
+
+
+
+

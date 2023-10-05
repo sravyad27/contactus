@@ -1,0 +1,34 @@
+<template>
+	<div class="center-container">
+		<lightning-card title="Contact Us " style="width:20%">
+			<div class="slds-p-horizontal_small">
+                <div style="font-weight: bold;">
+					<lightning-input label="Name" type="text" >
+					</lightning-input>
+				</div>
+				<div style="font-weight: bold;">
+					<lightning-input label="Email" type="text" data-id="txtEmailAddress" value={email}
+						onchange={handleEmailChange} required message-when-value-missing="Please Enter Your Email.">
+					</lightning-input>
+				</div>
+				<div style="font-weight: bold;">
+					<lightning-input label="Phone" type="tel" value={phone} onchange={handlePhoneChange} required
+						message-when-value-missing="Please Enter Your Phone." message-when-bad-input={errorMessage}>
+					</lightning-input>
+				</div>
+				<div style="font-weight: bold;">
+					<lightning-combobox label="Reason" options={caseReasonOptions} value={caseReason} onchange={handleCaseReasonChange}>
+					</lightning-combobox>
+				</div>
+				<div style="font-weight: bold;">
+					<lightning-textarea label="Description" value={description} onchange={handleDescriptionChange}>
+					</lightning-textarea>
+				</div>
+
+				<div class="slds-col slds-size_12-of-12 slds-text-align_center slds-m-top--large">
+					<lightning-button label="Submit" variant="brand" onclick={handleSubmit}></lightning-button>
+				</div>
+			</div>
+		</lightning-card>
+	</div>
+</template>
